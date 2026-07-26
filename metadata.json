@@ -1,0 +1,6 @@
+{
+  "name": "Qaraqalpaq - Túrk Tili Sertifikat AI",
+  "description": "Qaraqalpaq tili tasıwshıları ushın Túrk tili hám Shet tillerin biliw sertifikatı (CEFR/TÖMER) ushın AI arqalı arnawlı tayarlanıw hám sınav platforması",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
