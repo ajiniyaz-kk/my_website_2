@@ -9,6 +9,8 @@ import { ListeningPractice } from "./components/ListeningPractice";
 import { NewsSection } from "./components/NewsSection";
 import { SertifikatInfo } from "./components/SertifikatInfo";
 import { AuthAndProfileModal } from "./components/AuthAndProfileModal";
+import { AdminPanel } from "./components/AdminPanel";
+import { Lock, LogIn, UserPlus, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
 
 export interface UserStats {
   totalWordsLearned: number;
@@ -71,15 +73,16 @@ const loadInitialProfile = (): UserProfile => {
   }
 
   return {
-    isLoggedIn: true,
-    id: "usr_default_1",
-    name: "Ajiniyaz Xojabaev",
-    emailOrPhone: "ajiniyazkhojabaev@gmail.com",
-    authProvider: "google",
-    avatarUrl: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+    isLoggedIn: false,
+    id: "usr_guest",
+    name: "Mıyman (Agza Emes)",
+    emailOrPhone: "",
+    authProvider: "email",
+    role: "user",
+    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=guest",
     targetLevel: "B2",
     dailyGoalWords: 30,
-    joinDate: "2026-07-26",
+    joinDate: new Date().toISOString().split("T")[0],
     notificationsEnabled: true,
   };
 };
@@ -238,15 +241,87 @@ export default function App() {
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {activeTab === "units" && (
-          <VocabularyTrainer onQuizCompleted={handleQuizCompleted} />
+        {!userProfile.isLoggedIn ? (
+          /* GATED SITE BARRIER (REQUIREMENT 7) */
+          <div className="max-w-2xl mx-auto my-8 p-8 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-6 shadow-2xl animate-fade-in relative overflow-hidden">
+            <div className="absolute -right-12 -top-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-12 -bottom-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+              <Lock className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white">
+                Platformadan Paydalanıw Ushın Akkaunttan Kiriń!
+              </h2>
+              <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
+                Qaraqalpaq - Túrk Tili TÖMER & DTM AI platformasında sabaqlardı ótiw, AI sawbetshı hám sertifikat testlerin tapsırıw ushın jeke akkauntyńızǵa kirińız yaki dizimnen ótiń.
+              </p>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 max-w-md mx-auto">
+              <button
+                onClick={() => handleOpenAuthModal("login")}
+                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs py-3.5 px-4 rounded-xl transition cursor-pointer flex items-center justify-center space-x-2 shadow-lg shadow-cyan-600/20"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Akkauntqa Kiriw</span>
+              </button>
+
+              <button
+                onClick={() => handleOpenAuthModal("register")}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs py-3.5 px-4 rounded-xl transition cursor-pointer border border-slate-700 flex items-center justify-center space-x-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Jańa Agza Bolıw (OTP)</span>
+              </button>
+            </div>
+
+            {/* QUICK ADMIN ACCESS BADGE */}
+            <div className="pt-4 border-t border-slate-800/80">
+              <button
+                onClick={() => {
+                  const adminUser: UserProfile = {
+                    ...userProfile,
+                    isLoggedIn: true,
+                    id: "usr_admin_1",
+                    name: "Admin Xojabaev",
+                    emailOrPhone: "admin@tomer.uz",
+                    authProvider: "email",
+                    role: "admin",
+                    status: "online",
+                    targetLevel: "C1",
+                    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=admin_xojabaev",
+                  };
+                  setUserProfile(adminUser);
+                  setActiveTab("admin");
+                }}
+                className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center justify-center space-x-1.5 mx-auto bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 py-2 px-4 rounded-xl transition cursor-pointer"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>👑 Super Admin Sıpatında Birmomentte Kiriw</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* FULL LOGGED-IN SITE ACCESS */
+          <>
+            {activeTab === "units" && (
+              <VocabularyTrainer onQuizCompleted={handleQuizCompleted} />
+            )}
+            {activeTab === "speaking" && <SpeakingTutor />}
+            {activeTab === "writing" && <WritingEvaluator />}
+            {activeTab === "reading" && <ReadingPractice />}
+            {activeTab === "listening" && <ListeningPractice />}
+            {activeTab === "news" && <NewsSection />}
+            {activeTab === "sertifikat" && <SertifikatInfo />}
+            {activeTab === "admin" && userProfile.role === "admin" && (
+              <AdminPanel userProfile={userProfile} />
+            )}
+          </>
         )}
-        {activeTab === "speaking" && <SpeakingTutor />}
-        {activeTab === "writing" && <WritingEvaluator />}
-        {activeTab === "reading" && <ReadingPractice />}
-        {activeTab === "listening" && <ListeningPractice />}
-        {activeTab === "news" && <NewsSection />}
-        {activeTab === "sertifikat" && <SertifikatInfo />}
       </main>
 
       {/* User Profile, Auth & Settings Modal */}

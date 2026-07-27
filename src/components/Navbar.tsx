@@ -20,6 +20,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -94,6 +95,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       badge: "Info",
     },
   ];
+
+  if (userProfile.role === "admin") {
+    tabs.push({
+      id: "admin",
+      label: "👑 Admin Is Stoli",
+      icon: <ShieldCheck className="w-4 h-4 text-amber-400" />,
+      badge: "Admin",
+    });
+  }
 
   // Quick toggle theme function
   const cycleTheme = () => {

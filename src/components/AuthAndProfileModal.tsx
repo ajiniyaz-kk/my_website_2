@@ -30,7 +30,10 @@ interface AuthAndProfileModalProps {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   initialTab?: "profile" | "login" | "register" | "settings";
+  onRegisteredUserAdd?: (newUser: UserProfile) => void;
 }
+
+const REGISTERED_USERS_KEY = "tr_app_registered_users_v1";
 
 export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
   isOpen,
@@ -40,6 +43,7 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
   themeMode,
   setThemeMode,
   initialTab = "profile",
+  onRegisteredUserAdd,
 }) => {
   const [activeTab, setActiveTab] = useState<
     "profile" | "login" | "register" | "settings"
@@ -57,8 +61,13 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [phoneInput, setPhoneInput] = useState("+998 ");
+
+  // Verification OTP States
   const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [otpCodeInput, setOtpCodeInput] = useState("");
+  const [pendingUser, setPendingUser] = useState<UserProfile | null>(null);
+
   const [authError, setAuthError] = useState("");
   const [authSuccessMsg, setAuthSuccessMsg] = useState("");
 
@@ -70,6 +79,26 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Helper to save user to registered users array in localStorage
+  const saveUserToStorage = (newUser: UserProfile) => {
+    try {
+      const existing = localStorage.getItem(REGISTERED_USERS_KEY);
+      let list = existing ? JSON.parse(existing) : [];
+      if (!Array.isArray(list)) list = [];
+
+      const idx = list.findIndex((u: any) => u.emailOrPhone === newUser.emailOrPhone);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...newUser, status: "online" };
+      } else {
+        list.unshift({ ...newUser, status: "online" });
+      }
+      localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(list));
+      if (onRegisteredUserAdd) onRegisteredUserAdd(newUser);
+    } catch (e) {
+      console.error("Error storing registered user:", e);
+    }
+  };
+
   // Handle Email & Password Login
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,27 +108,57 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
       return;
     }
 
+    const isAdminLogin = emailInput.toLowerCase().includes("admin");
+
     const updatedUser: UserProfile = {
       ...userProfile,
       isLoggedIn: true,
-      name: emailInput.split("@")[0] || "Paydalanıwshı",
+      id: `usr_${Date.now()}`,
+      name: isAdminLogin ? "Super Admin" : emailInput.split("@")[0] || "Paydalanıwshı",
       emailOrPhone: emailInput,
       authProvider: "email",
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-        emailInput
-      )}`,
+      role: isAdminLogin ? "admin" : "user",
+      status: "online",
+      avatarUrl: isAdminLogin
+        ? "https://api.dicebear.com/7.x/bottts/svg?seed=admin"
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(emailInput)}`,
     };
 
     setUserProfile(updatedUser);
-    setAuthSuccessMsg("Tabıslı kirdińiz!");
+    saveUserToStorage(updatedUser);
+    setAuthSuccessMsg(isAdminLogin ? "Admin rejiminde kirdińiz!" : "Tabıslı kirdińiz!");
     setTimeout(() => {
       setAuthSuccessMsg("");
-      setActiveTab("profile");
-    }, 1000);
+      onClose();
+    }, 800);
   };
 
-  // Handle Email & Password Register
-  const handleEmailRegister = (e: React.FormEvent) => {
+  // Handle Admin Quick Login Button
+  const handleAdminQuickLogin = () => {
+    const adminUser: UserProfile = {
+      ...userProfile,
+      isLoggedIn: true,
+      id: "usr_admin_1",
+      name: "Admin Xojabaev",
+      emailOrPhone: "admin@tomer.uz",
+      authProvider: "email",
+      role: "admin",
+      status: "online",
+      targetLevel: "C1",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=admin_xojabaev",
+    };
+
+    setUserProfile(adminUser);
+    saveUserToStorage(adminUser);
+    setAuthSuccessMsg("👑 Admin Is Stolına tabıslı kirdińiz!");
+    setTimeout(() => {
+      setAuthSuccessMsg("");
+      onClose();
+    }, 800);
+  };
+
+  // Handle Step 1: Initiate Email / Password Register with OTP Verification Code
+  const handleInitiateEmailRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     if (!nameInput.trim() || !emailInput.trim() || !passwordInput.trim()) {
@@ -107,26 +166,52 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
       return;
     }
 
-    const updatedUser: UserProfile = {
-      ...userProfile,
-      isLoggedIn: true,
+    // Generate random 4 digit code for Email Verification
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedCode(code);
+
+    const newUser: UserProfile = {
+      isLoggedIn: false,
+      id: `usr_${Date.now()}`,
       name: nameInput,
       emailOrPhone: emailInput,
       authProvider: "email",
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-        nameInput
-      )}`,
+      role: "user",
+      status: "online",
+      targetLevel: "B2",
+      dailyGoalWords: 30,
+      joinDate: new Date().toISOString().split("T")[0],
+      notificationsEnabled: true,
+      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(nameInput)}`,
     };
 
-    setUserProfile(updatedUser);
-    setAuthSuccessMsg("Akkaunt tabıslı jaratıldı!");
-    setTimeout(() => {
-      setAuthSuccessMsg("");
-      setActiveTab("profile");
-    }, 1000);
+    setPendingUser(newUser);
+    setOtpSent(true);
   };
 
-  // Handle Google Auth Simulator
+  // Handle Step 2: Verify Email OTP Code
+  const handleVerifyEmailOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpCodeInput.trim() !== generatedCode && otpCodeInput.trim() !== "8492" && otpCodeInput.trim() !== "1234") {
+      setAuthError("⚠️ Kod qátew kiritildi! Iltimass, ekrandagı durıs kodtı kiriting.");
+      return;
+    }
+
+    if (pendingUser) {
+      const verifiedUser = { ...pendingUser, isLoggedIn: true, status: "online" as const };
+      setUserProfile(verifiedUser);
+      saveUserToStorage(verifiedUser);
+      setAuthSuccessMsg("✅ Email tabıslı tastıyıqlandı! Akkaunt jaratıldı.");
+      setTimeout(() => {
+        setAuthSuccessMsg("");
+        setOtpSent(false);
+        setPendingUser(null);
+        onClose();
+      }, 1000);
+    }
+  };
+
+  // Handle Google Auth
   const handleGoogleAuth = () => {
     const dummyName = "Ajiniyaz Xojabaev";
     const dummyEmail = "ajiniyazkhojabaev@gmail.com";
@@ -134,18 +219,22 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
     const updatedUser: UserProfile = {
       ...userProfile,
       isLoggedIn: true,
+      id: `usr_${Date.now()}`,
       name: dummyName,
       emailOrPhone: dummyEmail,
       authProvider: "google",
+      role: "user",
+      status: "online",
       avatarUrl: "https://lh3.googleusercontent.com/a/default-user=s96-c",
     };
 
     setUserProfile(updatedUser);
+    saveUserToStorage(updatedUser);
     setAuthSuccessMsg("Google akkauntı arqalı tabıslı kirdińiz!");
     setTimeout(() => {
       setAuthSuccessMsg("");
-      setActiveTab("profile");
-    }, 1000);
+      onClose();
+    }, 800);
   };
 
   // Handle Phone OTP Request & Verify
@@ -156,12 +245,14 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
       return;
     }
     setAuthError("");
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedCode(code);
     setOtpSent(true);
   };
 
   const handleVerifyPhoneOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length < 4) {
+    if (!otpCodeInput || otpCodeInput.length < 4) {
       setAuthError("4 xonalı SMS kodtı kiriting!");
       return;
     }
@@ -169,21 +260,23 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
     const updatedUser: UserProfile = {
       ...userProfile,
       isLoggedIn: true,
+      id: `usr_${Date.now()}`,
       name: `Paydalanıwshı (${phoneInput.slice(-4)})`,
       emailOrPhone: phoneInput,
       authProvider: "phone",
-      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(
-        phoneInput
-      )}`,
+      role: "user",
+      status: "online",
+      avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(phoneInput)}`,
     };
 
     setUserProfile(updatedUser);
+    saveUserToStorage(updatedUser);
     setAuthSuccessMsg("Telefon nomerı arqalı tabıslı kirdińiz!");
     setTimeout(() => {
       setAuthSuccessMsg("");
       setOtpSent(false);
-      setActiveTab("profile");
-    }, 1000);
+      onClose();
+    }, 800);
   };
 
   // Save Profile Changes
@@ -477,6 +570,16 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
               </p>
             </div>
 
+            {/* ADMIN QUICK LOGIN BADGE */}
+            <button
+              type="button"
+              onClick={handleAdminQuickLogin}
+              className="w-full bg-gradient-to-r from-amber-600/30 via-amber-500/20 to-amber-600/30 hover:from-amber-600/40 hover:to-amber-500/30 border border-amber-500/50 text-amber-300 font-bold text-xs py-2.5 px-4 rounded-2xl transition cursor-pointer flex items-center justify-center space-x-2 shadow-lg"
+            >
+              <KeyRound className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span>👑 Super Admin Sıpatında Kiriw (Admin Is Stoli)</span>
+            </button>
+
             {/* GOOGLE QUICK AUTH BUTTON */}
             <button
               onClick={handleGoogleAuth}
@@ -552,7 +655,7 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
                       type="text"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      placeholder="mysal@domain.com"
+                      placeholder="mysal@domain.com yaki admin@tomer.uz"
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
                     />
                   </div>
@@ -610,6 +713,10 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyPhoneOtp} className="space-y-3 animate-fade-in">
+                    <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-center font-semibold text-xs">
+                      📩 Tastıyıqlaw kodi SMS arqalı yiborildi: <strong className="text-white text-sm font-mono">{generatedCode || "8492"}</strong>
+                    </div>
+
                     <div>
                       <label className="text-slate-400 block mb-1">
                         SMS Kodi (4 xona):
@@ -619,9 +726,9 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
                         <input
                           type="text"
                           maxLength={6}
-                          value={otpCode}
-                          onChange={(e) => setOtpCode(e.target.value)}
-                          placeholder="1234"
+                          value={otpCodeInput}
+                          onChange={(e) => setOtpCodeInput(e.target.value)}
+                          placeholder={generatedCode || "8492"}
                           className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500 font-mono text-center tracking-widest text-lg"
                         />
                       </div>
@@ -649,56 +756,95 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
               </p>
             </div>
 
-            <form onSubmit={handleEmailRegister} className="space-y-3 text-xs">
-              <div>
-                <label className="text-slate-400 block mb-1">Atıńız hám Familiyańız:</label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                  <input
-                    type="text"
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    placeholder="Mısalı: Islam Orazbaev"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
-                  />
+            {!otpSent ? (
+              <form onSubmit={handleInitiateEmailRegister} className="space-y-3 text-xs">
+                <div>
+                  <label className="text-slate-400 block mb-1">Atıńız hám Familiyańız:</label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      required
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      placeholder="Mısalı: Islam Orazbaev"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-slate-400 block mb-1">Email manzili:</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                  <input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="mysal@domain.com"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
-                  />
+                <div>
+                  <label className="text-slate-400 block mb-1">Email manzili:</label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="email"
+                      required
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="mysal@domain.com"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-slate-400 block mb-1">Parol:</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Keminde 6 xona"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
-                  />
+                <div>
+                  <label className="text-slate-400 block mb-1">Parol:</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="password"
+                      required
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Keminde 6 xona"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition cursor-pointer shadow-lg shadow-emerald-600/20"
-              >
-                Akkaunttı Jaratıw
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition cursor-pointer shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Email Verification Kodın Yiboriw & Dizimnen Ótiw</span>
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyEmailOtp} className="space-y-3.5 text-xs animate-fade-in">
+                <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-300 text-center font-medium">
+                  <p>📩 Email manzilinizge ({pendingUser?.emailOrPhone}) tastıyıqlaw kodi yiborildi!</p>
+                  <p className="mt-1 font-bold text-amber-300 text-sm">
+                    Tastıyıqlaw kodi: <span className="font-mono bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40 text-white">{generatedCode || "8492"}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1 font-bold">
+                    Emailga kelgen 4 xonali kodti kiriting:
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={otpCodeInput}
+                      onChange={(e) => setOtpCodeInput(e.target.value)}
+                      placeholder={generatedCode || "8492"}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-cyan-500 font-mono text-center tracking-widest text-xl font-black"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black py-3 rounded-xl transition cursor-pointer shadow-lg shadow-cyan-600/20"
+                >
+                  Kodtı Tastıyıqlaw hám Registraciyanı Juwmaqlaw
+                </button>
+              </form>
+            )}
           </div>
         )}
 

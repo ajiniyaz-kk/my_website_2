@@ -111,6 +111,15 @@ export interface UserProfile {
   dailyGoalWords: number;
   joinDate: string;
   notificationsEnabled: boolean;
+  role?: "admin" | "user";
+  status?: "online" | "offline";
+  lastActive?: string;
+  wordsLearnedCount?: number;
+}
+
+export interface RegisteredUser extends UserProfile {
+  passwordHash?: string;
+  isBlocked?: boolean;
 }
 
 export type AppTab =
@@ -120,4 +129,6 @@ export type AppTab =
   | "reading"
   | "listening"
   | "news"
-  | "sertifikat";
+  | "sertifikat"
+  | "admin";
+
