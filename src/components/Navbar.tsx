@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppTab } from "../types";
+import { AppTab, UserProfile, ThemeMode } from "../types";
 import {
   BookOpen,
   MessageSquare,
@@ -13,6 +13,13 @@ import {
   BarChart2,
   X,
   Newspaper,
+  User,
+  Sun,
+  Moon,
+  Laptop,
+  Settings,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -26,6 +33,10 @@ interface NavbarProps {
     totalQuestionsAnswered?: number;
   };
   onResetStats?: () => void;
+  userProfile: UserProfile;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
+  onOpenAuthModal: (tab?: "profile" | "login" | "register" | "settings") => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,8 +44,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   userStats,
   onResetStats,
+  userProfile,
+  themeMode,
+  setThemeMode,
+  onOpenAuthModal,
 }) => {
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const tabs: { id: AppTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     {
@@ -79,11 +95,18 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
   ];
 
+  // Quick toggle theme function
+  const cycleTheme = () => {
+    if (themeMode === "system") setThemeMode("dark");
+    else if (themeMode === "dark") setThemeMode("light");
+    else setThemeMode("system");
+  };
+
   return (
-    <header className="bg-slate-900 border-b border-slate-800 text-slate-100 relative md:sticky md:top-0 z-50 backdrop-blur-md bg-opacity-95">
+    <header className="bg-slate-900 border-b border-slate-800 text-slate-100 relative md:sticky md:top-0 z-50 backdrop-blur-md bg-opacity-95 transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Top Header Row */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2 sm:py-3 gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 sm:py-3 gap-2 sm:gap-3">
           <div className="flex items-center space-x-2.5 sm:space-x-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
@@ -107,35 +130,132 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* User Live Performance Stats */}
-          <button
-            type="button"
-            onClick={() => setShowStatsModal(true)}
-            title="Tolıq statistikany kóriw yaki nollew"
-            className="flex items-center gap-2 sm:gap-4 text-[11px] sm:text-xs bg-slate-800/80 hover:bg-slate-800 rounded-xl p-1.5 sm:p-2 px-2.5 sm:px-3 border border-slate-700/60 hover:border-cyan-500/50 self-start md:self-auto transition cursor-pointer group"
-          >
-            <div className="flex items-center space-x-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span className="text-slate-400">Yodlanǵan:</span>
-              <span className="font-bold text-slate-100">
-                {userStats.totalWordsLearned} sóz
-              </span>
+          {/* Right Controls: Stats, Quick Theme Switcher & User Profile Menu */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {/* User Live Performance Stats */}
+            <button
+              type="button"
+              onClick={() => setShowStatsModal(true)}
+              title="Tolıq statistikany kóriw yaki nollew"
+              className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs bg-slate-800/80 hover:bg-slate-800 rounded-xl p-1.5 sm:p-2 px-2.5 sm:px-3 border border-slate-700/60 hover:border-cyan-500/50 transition cursor-pointer group"
+            >
+              <div className="flex items-center space-x-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="text-slate-400 hidden md:inline">Yodlanǵan:</span>
+                <span className="font-bold text-slate-100">
+                  {userStats.totalWordsLearned}
+                </span>
+              </div>
+              <div className="h-4 w-px bg-slate-700" />
+              <div className="flex items-center space-x-1">
+                <span className="text-slate-400 hidden md:inline">Durıslıq:</span>
+                <span className="font-bold text-emerald-400">
+                  {userStats.quizAccuracy}%
+                </span>
+              </div>
+            </button>
+
+            {/* Quick Device Theme Switcher (Req 1) */}
+            <button
+              onClick={cycleTheme}
+              className="p-2 sm:p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-amber-400 transition cursor-pointer flex items-center justify-center shrink-0"
+              title={`Sayt Teması: ${themeMode.toUpperCase()} (Tugmeni basıp almasıstırıń)`}
+            >
+              {themeMode === "dark" ? (
+                <Moon className="w-4 h-4 text-cyan-300" />
+              ) : themeMode === "light" ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Laptop className="w-4 h-4 text-blue-400" />
+              )}
+            </button>
+
+            {/* User Profile & Auth Menu (Req 2) */}
+            <div className="relative">
+              {userProfile.isLoggedIn ? (
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-xl p-1 sm:p-1.5 pr-2.5 transition cursor-pointer"
+                >
+                  <img
+                    src={
+                      userProfile.avatarUrl ||
+                      "https://api.dicebear.com/7.x/avataaars/svg?seed=user"
+                    }
+                    alt={userProfile.name}
+                    className="w-7 h-7 rounded-lg object-cover bg-slate-900 border border-cyan-500/40"
+                  />
+                  <span className="text-xs font-bold text-slate-100 max-w-[100px] truncate hidden md:inline">
+                    {userProfile.name}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onOpenAuthModal("login")}
+                  className="flex items-center space-x-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-lg shadow-cyan-600/20 transition cursor-pointer"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Kiriw</span>
+                </button>
+              )}
+
+              {/* Profile Dropdown Popup */}
+              {showProfileMenu && userProfile.isLoggedIn && (
+                <div
+                  className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 text-xs space-y-1 animate-scale-up"
+                  onMouseLeave={() => setShowProfileMenu(false)}
+                >
+                  <div className="p-2 border-b border-slate-800">
+                    <p className="font-extrabold text-white truncate">
+                      {userProfile.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {userProfile.emailOrPhone}
+                    </p>
+                    <span className="inline-block mt-1 text-[10px] font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                      {userProfile.targetLevel} Maqset
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      onOpenAuthModal("profile");
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-800 rounded-xl text-slate-200 flex items-center space-x-2 transition cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Jeke Kabinet & Stat</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      onOpenAuthModal("settings");
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-800 rounded-xl text-slate-200 flex items-center space-x-2 transition cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Sazlamalar & Tema</span>
+                  </button>
+
+                  <div className="pt-1 border-t border-slate-800">
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        onOpenAuthModal("profile");
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-rose-950/40 text-rose-300 rounded-xl flex items-center space-x-2 transition cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Shıǵıw</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="h-4 w-px bg-slate-700" />
-            <div className="flex items-center space-x-1.5">
-              <span className="text-slate-400">Durıslıq:</span>
-              <span className="font-bold text-emerald-400">
-                {userStats.quizAccuracy}%
-              </span>
-            </div>
-            <div className="h-4 w-px bg-slate-700" />
-            <div className="flex items-center space-x-1.5">
-              <span className="text-slate-400">Unitler:</span>
-              <span className="font-bold text-blue-400">
-                {userStats.completedUnitsCount}
-              </span>
-            </div>
-          </button>
+          </div>
         </div>
 
         {/* Tab Navigation Row */}

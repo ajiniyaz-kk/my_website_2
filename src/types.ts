@@ -98,6 +98,21 @@ export interface NewsItem {
   };
 }
 
+export type ThemeMode = "system" | "dark" | "light";
+
+export interface UserProfile {
+  isLoggedIn: boolean;
+  id: string;
+  name: string;
+  emailOrPhone: string;
+  authProvider: "email" | "google" | "phone";
+  avatarUrl?: string;
+  targetLevel: "A2" | "B1" | "B2" | "C1";
+  dailyGoalWords: number;
+  joinDate: string;
+  notificationsEnabled: boolean;
+}
+
 export type AppTab =
   | "units"
   | "speaking"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AppTab } from "./types";
+import { AppTab, UserProfile, ThemeMode } from "./types";
 import { Navbar } from "./components/Navbar";
 import { VocabularyTrainer } from "./components/VocabularyTrainer";
 import { SpeakingTutor } from "./components/SpeakingTutor";
@@ -8,6 +8,7 @@ import { ReadingPractice } from "./components/ReadingPractice";
 import { ListeningPractice } from "./components/ListeningPractice";
 import { NewsSection } from "./components/NewsSection";
 import { SertifikatInfo } from "./components/SertifikatInfo";
+import { AuthAndProfileModal } from "./components/AuthAndProfileModal";
 
 export interface UserStats {
   totalWordsLearned: number;
@@ -20,6 +21,8 @@ export interface UserStats {
 }
 
 const STATS_STORAGE_KEY = "tr_app_user_stats_v2";
+const PROFILE_STORAGE_KEY = "tr_app_user_profile_v1";
+const THEME_STORAGE_KEY = "tr_app_theme_mode_v1";
 
 const loadInitialStats = (): UserStats => {
   try {
@@ -46,7 +49,6 @@ const loadInitialStats = (): UserStats => {
     console.error("Error loading stats from localStorage:", e);
   }
 
-  // Initial stats if none exist
   return {
     totalWordsLearned: 28,
     quizAccuracy: 92,
@@ -58,13 +60,61 @@ const loadInitialStats = (): UserStats => {
   };
 };
 
+const loadInitialProfile = (): UserProfile => {
+  try {
+    const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Error loading profile from localStorage:", e);
+  }
+
+  return {
+    isLoggedIn: true,
+    id: "usr_default_1",
+    name: "Ajiniyaz Xojabaev",
+    emailOrPhone: "ajiniyazkhojabaev@gmail.com",
+    authProvider: "google",
+    avatarUrl: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+    targetLevel: "B2",
+    dailyGoalWords: 30,
+    joinDate: "2026-07-26",
+    notificationsEnabled: true,
+  };
+};
+
+const loadInitialTheme = (): ThemeMode => {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode;
+    if (saved && (saved === "system" || saved === "dark" || saved === "light")) {
+      return saved;
+    }
+  } catch (e) {
+    console.error("Error loading theme from localStorage:", e);
+  }
+  return "system";
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>("units");
 
-  // User Stats State (loaded from localStorage)
+  // User Stats State
   const [userStats, setUserStats] = useState<UserStats>(loadInitialStats);
 
-  // Save to localStorage whenever userStats changes
+  // User Profile State
+  const [userProfile, setUserProfile] = useState<UserProfile>(loadInitialProfile);
+
+  // Theme Mode State (system / dark / light)
+  const [themeMode, setThemeMode] = useState<ThemeMode>(loadInitialTheme);
+
+  // Auth & Settings Modal Control
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalInitialTab, setAuthModalInitialTab] = useState<
+    "profile" | "login" | "register" | "settings"
+  >("profile");
+
+  // Save Stats to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(userStats));
@@ -72,6 +122,55 @@ export default function App() {
       console.error("Error saving stats to localStorage:", e);
     }
   }, [userStats]);
+
+  // Save Profile to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(userProfile));
+    } catch (e) {
+      console.error("Error saving profile to localStorage:", e);
+    }
+  }, [userProfile]);
+
+  // Save & Apply Device / Custom Theme
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    } catch (e) {
+      console.error("Error saving theme to localStorage:", e);
+    }
+
+    const applyTheme = () => {
+      const isSystemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const effectiveDark =
+        themeMode === "dark" || (themeMode === "system" && isSystemDark);
+
+      if (effectiveDark) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
+      }
+    };
+
+    applyTheme();
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemThemeChange = () => {
+      if (themeMode === "system") applyTheme();
+    };
+
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
+  }, [themeMode]);
+
+  const handleOpenAuthModal = (
+    tab: "profile" | "login" | "register" | "settings" = "profile"
+  ) => {
+    setAuthModalInitialTab(tab);
+    setIsAuthModalOpen(true);
+  };
 
   const handleQuizCompleted = (
     scorePercent: number,
@@ -81,11 +180,9 @@ export default function App() {
     correctWordIds: string[] = []
   ) => {
     setUserStats((prev) => {
-      // Add newly learned correct word IDs
       const learnedSet = new Set([...prev.learnedWordIds, ...correctWordIds]);
       const updatedLearnedWordIds = Array.from(learnedSet);
 
-      // Add completed unit ID
       const completedUnitsSet = new Set(prev.completedUnitIds);
       if (unitId && scorePercent >= 50) {
         completedUnitsSet.add(unitId);
@@ -126,13 +223,17 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 dark:bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white transition-colors">
       {/* Top Header / Navigation */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userStats={userStats}
         onResetStats={handleResetStats}
+        userProfile={userProfile}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
+        onOpenAuthModal={handleOpenAuthModal}
       />
 
       {/* Main Content Body */}
@@ -147,6 +248,17 @@ export default function App() {
         {activeTab === "news" && <NewsSection />}
         {activeTab === "sertifikat" && <SertifikatInfo />}
       </main>
+
+      {/* User Profile, Auth & Settings Modal */}
+      <AuthAndProfileModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
+        initialTab={authModalInitialTab}
+      />
 
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-6 mt-12">
