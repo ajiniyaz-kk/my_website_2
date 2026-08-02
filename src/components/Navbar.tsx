@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AppTab, UserProfile, ThemeMode } from "../types";
 import {
+  LayoutDashboard,
   BookOpen,
   MessageSquare,
   PenTool,
@@ -54,6 +55,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const tabs: { id: AppTab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    {
+      id: "dashboard",
+      label: "Bas Bet",
+      icon: <LayoutDashboard className="w-4 h-4" />,
+    },
     {
       id: "units",
       label: "Sózlik Unitler",

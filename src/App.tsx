@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AppTab, UserProfile, ThemeMode } from "./types";
 import { Navbar } from "./components/Navbar";
+import { Dashboard } from "./components/Dashboard";
 import { VocabularyTrainer } from "./components/VocabularyTrainer";
 import { SpeakingTutor } from "./components/SpeakingTutor";
 import { WritingEvaluator } from "./components/WritingEvaluator";
@@ -10,7 +11,7 @@ import { NewsSection } from "./components/NewsSection";
 import { SertifikatInfo } from "./components/SertifikatInfo";
 import { AuthAndProfileModal } from "./components/AuthAndProfileModal";
 import { AdminPanel } from "./components/AdminPanel";
-import { Lock, LogIn, UserPlus, ShieldCheck, Sparkles, KeyRound } from "lucide-react";
+import { Lock, LogIn, UserPlus, Sparkles, MessageSquare, FileCheck, Award, Users } from "lucide-react";
 
 export interface UserStats {
   totalWordsLearned: number;
@@ -20,6 +21,8 @@ export interface UserStats {
   totalQuestionsAnswered: number;
   learnedWordIds: string[];
   completedUnitIds: string[];
+  currentStreakDays?: number;
+  lastActivityDate?: string;
 }
 
 const STATS_STORAGE_KEY = "tr_app_user_stats_v2";
@@ -45,6 +48,8 @@ const loadInitialStats = (): UserStats => {
         totalQuestionsAnswered: totalQuestions,
         learnedWordIds: learnedIds,
         completedUnitIds: completedUnits,
+        currentStreakDays: p.currentStreakDays || 3,
+        lastActivityDate: p.lastActivityDate || new Date().toISOString().split("T")[0],
       };
     }
   } catch (e) {
@@ -59,6 +64,8 @@ const loadInitialStats = (): UserStats => {
     totalQuestionsAnswered: 30,
     learnedWordIds: Array.from({ length: 28 }, (_, i) => `init_word_${i}`),
     completedUnitIds: ["unit_1", "unit_2"],
+    currentStreakDays: 3,
+    lastActivityDate: new Date().toISOString().split("T")[0],
   };
 };
 
@@ -100,7 +107,7 @@ const loadInitialTheme = (): ThemeMode => {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<AppTab>("units");
+  const [activeTab, setActiveTab] = useState<AppTab>("dashboard");
 
   // User Stats State
   const [userStats, setUserStats] = useState<UserStats>(loadInitialStats);
@@ -207,6 +214,8 @@ export default function App() {
         totalQuestionsAnswered: newTotalQuestions,
         learnedWordIds: updatedLearnedWordIds,
         completedUnitIds: updatedCompletedUnitIds,
+        currentStreakDays: (prev.currentStreakDays || 1) + 1,
+        lastActivityDate: new Date().toISOString().split("T")[0],
       };
     });
   };
@@ -220,6 +229,8 @@ export default function App() {
       totalQuestionsAnswered: 0,
       learnedWordIds: [],
       completedUnitIds: [],
+      currentStreakDays: 1,
+      lastActivityDate: new Date().toISOString().split("T")[0],
     };
     setUserStats(emptyStats);
     localStorage.removeItem(STATS_STORAGE_KEY);
@@ -242,22 +253,68 @@ export default function App() {
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {!userProfile.isLoggedIn ? (
-          /* GATED SITE BARRIER (REQUIREMENT 7) */
-          <div className="max-w-2xl mx-auto my-8 p-8 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-6 shadow-2xl animate-fade-in relative overflow-hidden">
-            <div className="absolute -right-12 -top-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-12 -bottom-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          /* GATED SITE BARRIER (EXPANDED WITH FEATURES & SOCIAL PROOF) */
+          <div className="max-w-3xl mx-auto my-6 p-6 sm:p-8 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-6 shadow-2xl animate-fade-in relative overflow-hidden">
+            <div className="absolute -right-12 -top-12 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-12 -bottom-12 w-56 h-56 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
               <Lock className="w-8 h-8" />
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Qaraqalpaq - Túrk Tili AI Platforması</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 Platformadan Paydalanıw Ushın Akkaunttan Kiriń!
               </h2>
-              <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
-                Qaraqalpaq - Túrk Tili TÖMER & DTM AI platformasında sabaqlardı ótiw, AI sawbetshı hám sertifikat testlerin tapsırıw ushın jeke akkauntyńızǵa kirińız yaki dizimnen ótiń.
+              <p className="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
+                TÖMER hám DTM xalqara sertifikat sınavlarına tayarlanıw, AI sawbetshı hám avtomat baha beriw kónlikpelerinen paydalanıw ushın akkauntyńızǵa kiriń yaki dizimnen ótiń.
               </p>
+            </div>
+
+            {/* 3 PLATFORM FEATURE HIGHLIGHT CARDS (VAZIFA 3) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-left">
+              <div className="p-4 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-white text-xs">AI penen Söylesiw</h3>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Real vaqtta AI tutori penen turksha dawıslı ham chat arqalı sóylesiw shınıǵıwları.
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <FileCheck className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-white text-xs">Avtomat Baha Beriw</h3>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Jazǵan essay ham insholayńızǵa DTM/TÖMER kriteriyaları boyınsha birmomentte baha beriw.
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Award className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-white text-xs">Sertifikatqa Tayarlanıw</h3>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  B1, B2, C1 dáreje sertifikat sınavları xam interaktiv test bazaları.
+                </p>
+              </div>
+            </div>
+
+            {/* SOCIAL PROOF STAT ELEMENT (VAZIFA 3) */}
+            {/* Note: In production this count will be fetched from backend users API */}
+            <div className="py-2 px-4 bg-slate-950/60 border border-slate-800/60 rounded-xl inline-flex items-center space-x-2 text-xs text-slate-300">
+              <Users className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span>
+                <strong className="text-white font-bold">1,250+ paydalanıwshı</strong> TÖMER hám DTM sınavlarına biz penen tayarlanbaqta
+              </span>
             </div>
 
             {/* ACTION BUTTONS */}
@@ -278,36 +335,25 @@ export default function App() {
                 <span>Jańa Agza Bolıw (OTP)</span>
               </button>
             </div>
-
-            {/* QUICK ADMIN ACCESS BADGE */}
-            <div className="pt-4 border-t border-slate-800/80">
-              <button
-                onClick={() => {
-                  const adminUser: UserProfile = {
-                    ...userProfile,
-                    isLoggedIn: true,
-                    id: "usr_admin_1",
-                    name: "Admin Xojabaev",
-                    emailOrPhone: "admin@tomer.uz",
-                    authProvider: "email",
-                    role: "admin",
-                    status: "online",
-                    targetLevel: "C1",
-                    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=admin_xojabaev",
-                  };
-                  setUserProfile(adminUser);
-                  setActiveTab("admin");
-                }}
-                className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center justify-center space-x-1.5 mx-auto bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 py-2 px-4 rounded-xl transition cursor-pointer"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>👑 Super Admin Sıpatında Birmomentte Kiriw</span>
-              </button>
-            </div>
           </div>
         ) : (
           /* FULL LOGGED-IN SITE ACCESS */
           <>
+            {activeTab === "dashboard" && (
+              <Dashboard
+                userProfile={userProfile}
+                userStats={{
+                  ...userStats,
+                  totalWordsLearned: userStats.totalWordsLearned,
+                  quizzesCompleted: userStats.completedUnitsCount,
+                  averageAccuracy: userStats.quizAccuracy,
+                  totalPoints: userStats.totalWordsLearned * 10,
+                  currentStreakDays: userStats.currentStreakDays || 3,
+                  lastActivityDate: userStats.lastActivityDate || new Date().toISOString().split("T")[0],
+                }}
+                onSelectTab={setActiveTab}
+              />
+            )}
             {activeTab === "units" && (
               <VocabularyTrainer onQuizCompleted={handleQuizCompleted} />
             )}

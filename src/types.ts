@@ -122,7 +122,17 @@ export interface RegisteredUser extends UserProfile {
   isBlocked?: boolean;
 }
 
+export interface UserStats {
+  totalWordsLearned: number;
+  quizzesCompleted: number;
+  averageAccuracy: number;
+  totalPoints: number;
+  currentStreakDays?: number;
+  lastActivityDate?: string;
+}
+
 export type AppTab =
+  | "dashboard"
   | "units"
   | "speaking"
   | "writing"

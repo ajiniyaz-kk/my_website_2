@@ -100,6 +100,9 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
   };
 
   // Handle Email & Password Login
+  // SECURITY NOTICE:
+  // Client-side role checking and localStorage state are purely for UI preview demonstration.
+  // In production, user roles must be granted server-side (e.g., via Firebase Auth Custom Claims or Firestore rules).
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
@@ -108,7 +111,9 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
       return;
     }
 
-    const isAdminLogin = emailInput.toLowerCase().includes("admin");
+    const normalizedEmail = emailInput.trim().toLowerCase();
+    const configuredAdminEmail = (import.meta.env.VITE_ADMIN_EMAIL || "admin@tomer.uz").toLowerCase();
+    const isAdminLogin = normalizedEmail === configuredAdminEmail || normalizedEmail === "admin@tomer.uz";
 
     const updatedUser: UserProfile = {
       ...userProfile,
@@ -127,30 +132,6 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
     setUserProfile(updatedUser);
     saveUserToStorage(updatedUser);
     setAuthSuccessMsg(isAdminLogin ? "Admin rejiminde kirdińiz!" : "Tabıslı kirdińiz!");
-    setTimeout(() => {
-      setAuthSuccessMsg("");
-      onClose();
-    }, 800);
-  };
-
-  // Handle Admin Quick Login Button
-  const handleAdminQuickLogin = () => {
-    const adminUser: UserProfile = {
-      ...userProfile,
-      isLoggedIn: true,
-      id: "usr_admin_1",
-      name: "Admin Xojabaev",
-      emailOrPhone: "admin@tomer.uz",
-      authProvider: "email",
-      role: "admin",
-      status: "online",
-      targetLevel: "C1",
-      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=admin_xojabaev",
-    };
-
-    setUserProfile(adminUser);
-    saveUserToStorage(adminUser);
-    setAuthSuccessMsg("👑 Admin Is Stolına tabıslı kirdińiz!");
     setTimeout(() => {
       setAuthSuccessMsg("");
       onClose();
@@ -569,16 +550,6 @@ export const AuthAndProfileModal: React.FC<AuthAndProfileModalProps> = ({
                 Oqıw nátiyjelerińizdi hám statistikańızdı barlıq devicelarda saqlaw ushın kiring.
               </p>
             </div>
-
-            {/* ADMIN QUICK LOGIN BADGE */}
-            <button
-              type="button"
-              onClick={handleAdminQuickLogin}
-              className="w-full bg-gradient-to-r from-amber-600/30 via-amber-500/20 to-amber-600/30 hover:from-amber-600/40 hover:to-amber-500/30 border border-amber-500/50 text-amber-300 font-bold text-xs py-2.5 px-4 rounded-2xl transition cursor-pointer flex items-center justify-center space-x-2 shadow-lg"
-            >
-              <KeyRound className="w-4 h-4 text-amber-400 animate-pulse" />
-              <span>👑 Super Admin Sıpatında Kiriw (Admin Is Stoli)</span>
-            </button>
 
             {/* GOOGLE QUICK AUTH BUTTON */}
             <button
