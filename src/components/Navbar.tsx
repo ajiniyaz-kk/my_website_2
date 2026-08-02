@@ -22,6 +22,7 @@ import {
   LogOut,
   ChevronDown,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -111,11 +112,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     });
   }
 
-  // Quick toggle theme function
-  const cycleTheme = () => {
-    if (themeMode === "system") setThemeMode("dark");
-    else if (themeMode === "dark") setThemeMode("light");
-    else setThemeMode("system");
+  // Quick toggle theme function between Dark and Light mode
+  const toggleTheme = () => {
+    setThemeMode(themeMode === "dark" ? "light" : "dark");
   };
 
   return (
@@ -171,18 +170,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </button>
 
-            {/* Quick Device Theme Switcher (Req 1) */}
+            {/* Dark / Light Mode Toggle Button */}
             <button
-              onClick={cycleTheme}
-              className="p-2 sm:p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-amber-400 transition cursor-pointer flex items-center justify-center shrink-0"
-              title={`Sayt Teması: ${themeMode.toUpperCase()} (Tugmeni basıp almasıstırıń)`}
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 sm:px-3 sm:py-2 bg-slate-800/90 hover:bg-slate-700/80 border border-slate-700/80 rounded-xl text-slate-100 transition-all duration-300 shadow-sm hover:shadow-cyan-500/10 cursor-pointer flex items-center gap-2 shrink-0 group"
+              title={
+                themeMode === "dark"
+                  ? "Kúndizgi rejımge ótiv (Light Mode)"
+                  : "Túngi rejımge ótiv (Dark Mode)"
+              }
+              aria-label="Toggle Dark and Light Mode"
             >
               {themeMode === "dark" ? (
-                <Moon className="w-4 h-4 text-cyan-300" />
-              ) : themeMode === "light" ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <>
+                  <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300 shrink-0" />
+                  <span className="text-xs font-semibold text-amber-300 hidden md:inline">
+                    Light Mode
+                  </span>
+                </>
               ) : (
-                <Laptop className="w-4 h-4 text-blue-400" />
+                <>
+                  <Moon className="w-4 h-4 text-cyan-400 group-hover:-rotate-12 transition-transform duration-300 shrink-0" />
+                  <span className="text-xs font-semibold text-cyan-300 hidden md:inline">
+                    Dark Mode
+                  </span>
+                </>
               )}
             </button>
 
@@ -274,36 +287,37 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Tab Navigation Row */}
-        <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar border-t border-slate-800/80 pt-2 pb-1">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
+        {/* Tab Navigation Header Row */}
+        <div className="flex items-center justify-between border-t border-slate-800/80 pt-2 pb-1">
+          {activeTab === "dashboard" ? (
+            <div className="flex items-center space-x-3">
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
+                onClick={() => setActiveTab("dashboard")}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/20 cursor-default"
               >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.badge && (
-                  <span
-                    className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-md font-semibold ${
-                      isActive
-                        ? "bg-blue-800 text-blue-100"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
-                    }`}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Bas Bet</span>
               </button>
-            );
-          })}
+              <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                 Bólimlerge ótiw ushın tómendegi kartalardı basıń
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700/80 hover:border-cyan-500/50 transition cursor-pointer shadow-sm"
+              >
+                <ArrowLeft className="w-4 h-4 text-cyan-400" />
+                <span>⬅ Bas Betke Qaytıw</span>
+              </button>
+              <div className="h-4 w-px bg-slate-800" />
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                {tabs.find((t) => t.id === activeTab)?.icon}
+                <span>{tabs.find((t) => t.id === activeTab)?.label}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

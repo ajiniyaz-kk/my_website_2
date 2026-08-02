@@ -103,7 +103,7 @@ const loadInitialTheme = (): ThemeMode => {
   } catch (e) {
     console.error("Error loading theme from localStorage:", e);
   }
-  return "system";
+  return "dark";
 };
 
 export default function App() {

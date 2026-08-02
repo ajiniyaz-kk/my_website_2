@@ -124,6 +124,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       icon: <Award className="w-6 h-6 text-rose-400" />,
       color: "hover:border-rose-500/50 hover:shadow-rose-500/10",
     },
+    {
+      id: "news" as AppTab,
+      title: "Túrkya Janalıqları",
+      description: "Sońǵı janalıqlar, maqalalar hám madaniyat xabarları",
+      badge: "News & Media",
+      icon: <Newspaper className="w-6 h-6 text-teal-400" />,
+      color: "hover:border-teal-500/50 hover:shadow-teal-500/10",
+    },
   ];
 
   return (

@@ -43,6 +43,8 @@ app.post("/api/vocabulary/check", async (req, res) => {
 
     const ai = getGeminiClient();
     const prompt = `Siz Qaraqalpaq hám Túrk tilleri boyınsha ekspert oqıtıwshısız.
+ÁHMIYETLI LINGVISTIKATALABI: Barlıq túsindirmeler hám tekstlerdi TAZA, DURIS QARAQALPAQ TILINDE (á, ǵ, ó, ń, í, ú áripleri menen) jazıń. Ózbeksha sózler ("bilen", "yodlaw", "insho", "daraja") MÚLDE qullanılmasın! "menen"/"hám", "úyreniw"/"jatlaw", "shıǵarma", "dáreje" sózlerin qullanıń.
+
 Tapsırma: Oqıwshıǵa qaraqalpaqsha "${karakalpakWord}" sózi berilgen hám ol túrk tilinde "${userTurkishAnswer}" dep juwap berdi.
 Unit teması: ${unitContext || "Gúnlik sózler"}.
 
@@ -164,20 +166,22 @@ app.post("/api/speaking/chat", async (req, res) => {
 
     const ai = getGeminiClient();
 
-    const systemInstruction = `Siz Ózbekstandaǵı Shet tillerin biliw sertifikatı (TÖMER / CEFR ${cefrLevel || "B2"}) Túrk tili awızша sınav (Speaking) komissiyası aǵzası hám AI oqıtıwshısız.
+    const systemInstruction = `Siz Shet tillerin biliw sertifikatı (TÖMER / CEFR ${cefrLevel || "B2"}) Túrk tili awızsha sınav (Speaking) komissiyası aǵzası hám AI oqıtıwshısız.
+ÁHMIYETLI LINGVISTIKATALABI: Barlıq túsindirme hám grammatikalıq pikirlerdi TAZA, DURIS QARAQALPAQ TILINDE (á, ǵ, ó, ń, í, ú áripleri menen) berıń. Ózbeksha sózler ("bilen", "yodlaw", "insho", "daraja") MÚLDE qullanılmasın! "menen"/"hám", "úyreniw"/"jatlaw", "shıǵarma", "dáreje" sózlerin qullanıń.
+
 Múratıńız:
 1. Paydalanıwshı menen Túrk tilinde tábiyiy, qızıqlı hám sertifikat standartlarına mas dialóg alıp barıw.
 2. Tema: "${topic || "Serbest Konuşma ve Kendini Tanıtma"}".
 3. Paydalanıwshınıń hár bir juwabın talıllaw hám:
    - Grammatikalıq hám kelime qáteliklerin kórsetiw (Karakalpak tilinde túsindiriw),
    - Jaqsıraq bal beriwshi alternative Túrkce gápler (Better Expressions) usınıs etiw,
-   - Sınawdı dawam ettiriw ushın geypar kelesi soraw beriw (Túrk tilinde).
+   - Sınawdı dawam ettiriw ushın kelesi soraw beriw (Túrk tilinde).
 
 JSON Juwap Yapısı:
 - replyTurkish: Siziń paydalanıwshıǵa beretuǵın Túrk tilindegi pikirıńiz yaki kelesi soravıńız.
 - grammarFeedbackKarakalpak: Paydalanıwshınıń gáplerindegi qátelikler hám grammatika boyınsha Qaraqalpaqsha pikir (eger qátelik bolmasa, maqtov bildiriń).
 - betterPhrasesTurkish: [ "1-2 durıs hám baııraq gáp usınısı" ].
-- CEFRScoreEstimate: CEFR dárrejesi baǵalawı (A1, A2, B1, B2, C1).`;
+- CEFRScoreEstimate: CEFR dárejesi baǵalawı (A1, A2, B1, B2, C1).`;
 
     const chatFormatted = messages.map((m: any) => ({
       role: m.role === "user" ? "user" : "model",
@@ -235,21 +239,23 @@ app.post("/api/writing/evaluate", async (req, res) => {
 
     const ai = getGeminiClient();
 
-    const prompt = `Siz Ózbekstan DTM / Bilim hám kásipıylik kónlikpelerin bahalaw agentligi hám TÖMER sertifikat sınavı 'Yazma' (Writing) bólimi uzqán ekspertisiz.
+    const prompt = `Siz DTM / Bilim hám kásipıylik kónlikpelerin bahalaw agentligi hám TÖMER sertifikat sınavı 'Yazma' (Writing) bólimi ekspertisiz.
+ÁHMIYETLI LINGVISTIKATALABI: Barlıq túsindirme hám xulosalardı TAZA, TÁBIYIY QARAQALPAQ TILINDE (á, ǵ, ó, ń, í, ú áripleri menen) berıń. Ózbeksha sózler ("bilen", "yodlaw", "insho", "daraja") MÚLDE qullanılmasın! "menen"/"hám", "úyreniw"/"jatlaw", "shıǵarma", "dáreje" sózlerin qullanıń.
+
 Sınaw Talabı:
 - Level: ${cefrLevel || "B2"}
 - Tapsırma teması: "${taskTitle}"
 - Tapsırma mazmunı: "${taskPrompt}"
-- Oqıwshı jazǵan insho/xat:
+- Oqıwshı jazǵan shıǵarma/xat:
 """
 ${userEssay}
 """
 
-Iltimas, tómendegi rásmiy Ózbekstan Shet tillerin biliw sertifikat kriteryaları boyınsha 30 ballıq sistemada bahalań:
+Íltımas, tómendegi rásmiy Shet tillerin biliw sertifikat kriteriyaları boyınsha 30 ballıq sistemada bahalań:
 1. Task Fulfillment (Görev Tamamlama): 0-7.5 ball
 2. Coherence & Cohesion (Bütünlük ve Bağdaşıklık): 0-7.5 ball
 3. Vocabulary (Kelime Zenginliği): 0-7.5 ball
-4. Grammar & Accuracy (Dilbilgisi ve Doğruluk): 0-7.5 ball
+4. Grammar & Accuracy (Grammatika ve Doğruluk): 0-7.5 ball
 
 JSON Juvap Yapısı:
 - totalScore: jámı bal (max 30)
@@ -258,10 +264,10 @@ JSON Juvap Yapısı:
 - coherenceScore: number (0-7.5)
 - vocabularyScore: number (0-7.5)
 - grammarScore: number (0-7.5)
-- generalFeedbackKarakalpak: Qaraqalpaqsha ulıwma bahalaw hám nátije haqqında xulosasız
+- generalFeedbackKarakalpak: Qaraqalpaqsha ulıwma bahalaw hám nátije haqqında xulosa
 - strengthsKarakalpak: [ "Kúshli tárepleri" ]
 - weaknessesKarakalpak: [ "Islew kerek bolǵan kemshilikler" ]
-- correctedEssayTurkish: Jazılǵan inshonıń durıslanǵan, túsirilip qaldırılǵan qáteler joytılǵan ideal túrkce nusqası`;
+- correctedEssayTurkish: Jazılǵan shıǵarmanıń durıslanǵan, túsirilip qaldırılǵan qáteler joytılǵan ideal túrkce nusqası`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",

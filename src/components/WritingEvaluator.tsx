@@ -22,14 +22,14 @@ export const WritingEvaluator: React.FC = () => {
     },
     {
       id: "w2",
-      title: "2-Tapsırma: İjtimoiy Tarmaqlar hám Jaslar (Insho / Essay)",
+      title: "2-Tapsırma: Jámiyetlik Tarmaqlar hám Jaslar (Shıǵarma / Essay)",
       prompt:
         "Sosyal medyanın gençlerin eğitimi ve sosyal hayatı üzerindeki olumlu ve olumsuz etkilerini tartışan bir kompozisyon (essay) yazınız. Kendi görüşlerinizi örneklerle destekleyiniz. (En az 200 kelime).",
       level: "B2-C1",
     },
     {
       id: "w3",
-      title: "3-Tapsırma: Ekologiya hám Atırap-Aylıq (Insho / Essay)",
+      title: "3-Tapsırma: Ekologiya hám Átirap-Aylıq (Shıǵarma / Essay)",
       prompt:
         "İklim değişikliği ve çevre kirliliği günümüzün en büyük sorunlarındandır. Bireylerin ve devletlerin bu konuda alması gereken önlemleri açıklayan analitik bir yazı yazınız. (En az 200 kelime).",
       level: "B2-C1",
@@ -89,11 +89,11 @@ export const WritingEvaluator: React.FC = () => {
               <span>Jazıw (Writing) 30 Ballıq Rubrik Sınawı</span>
             </div>
             <h2 className="text-2xl font-black text-white">
-              Túrk Tili Insho (Writing) AI Bahalawshı
+              Túrk Tili Shıǵarma (Writing) AI Bahalawshı
             </h2>
             <p className="text-slate-400 text-sm mt-1 max-w-2xl">
               Ózbekstan Shet tillerin biliw sertifikatı rásmiy 30 ballıq bahalaw
-              kriteriyaları (Görev Tamamlama, Bütünlük, Kelime Bilgisi, Dilbilgisi) boyınsha inshońızdı AI arqalı tekserıń.
+              kriteriyaları (Görev Tamamlama, Bütünlük, Kelime Bilgisi, Grammatika) boyınsha shıǵarmańızdı AI arqalı tekserıń.
             </p>
           </div>
         </div>
@@ -146,7 +146,7 @@ export const WritingEvaluator: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold text-slate-200">
-                Inshońızdı Túrk tilinde jazıń:
+                Shıǵarmańızdı Túrk tilinde jazıń:
               </span>
               <span>
                 Sózler sanı:{" "}
@@ -198,7 +198,7 @@ export const WritingEvaluator: React.FC = () => {
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Inshonı AI Bahalaw</span>
+                    <span>Shıǵarmanı AI Bahalaw</span>
                   </>
                 )}
               </button>
@@ -228,7 +228,7 @@ export const WritingEvaluator: React.FC = () => {
 
                 <div className="text-right">
                   <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
-                    Boǵalanǵan CEFR Band
+                    Bahalanǵan CEFR Band
                   </span>
                   <span className="inline-block mt-0.5 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm rounded-lg shadow">
                     {evaluation.CEFRBand}
@@ -264,7 +264,7 @@ export const WritingEvaluator: React.FC = () => {
                 </div>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
                   <span className="text-slate-400 block text-[10px]">
-                    Dilbilgisi & Doğruluk:
+                    Grammatika & Doğruluk:
                   </span>
                   <strong className="text-amber-400 font-bold">
                     {evaluation.grammarScore} / 7.5
@@ -321,10 +321,10 @@ export const WritingEvaluator: React.FC = () => {
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-3 min-h-[400px] flex flex-col items-center justify-center">
               <Award className="w-12 h-12 text-slate-700" />
               <h3 className="text-base font-bold text-slate-300">
-                Inshońızdı AI Bahalawǵa Tayar
+                Shıǵarmańızdı AI Bahalawǵa Tayar
               </h3>
               <p className="text-xs text-slate-500 max-w-xs">
-                Inshońızdı sol táreptegi maydanǵa jazıń hám 'Inshonı AI Bahalaw' túymesin basıń.
+                Shıǵarmańızdı sol táreptegi maydanǵa jazıń hám 'Shıǵarmanı AI Bahalaw' túymesin basıń.
               </p>
             </div>
           )}
